@@ -30,18 +30,6 @@ jobs:
             ARCHS=arm64 ONLY_ACTIVE_ARCH=YES EASYDICT_RELEASE_PACKAGING=YES \
             CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
             MARKETING_VERSION=2.27.1 CURRENT_PROJECT_VERSION=71
-      - name: Run existing regression tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          xcodebuild test \
-            -workspace Easydict.xcworkspace -scheme Easydict \
-            -configuration Debug -destination 'platform=macOS,arch=arm64' \
-            -derivedDataPath "$RUNNER_TEMP/Easydict-Agent/tests" \
-            -only-testing:EasydictTests/QueryModelCancellationTests \
-            -only-testing:EasydictTests/UtilityFunctionsTests \
-            ARCHS=arm64 ONLY_ACTIVE_ARCH=YES EASYDICT_RELEASE_PACKAGING=YES \
-            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=
       - name: Package application
         shell: bash
         run: |
@@ -60,3 +48,23 @@ jobs:
           name: easy-translation-arm64
           path: dist/
           if-no-files-found: error
+      - name: Run existing regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Sequential configurations share package checkouts, not build products.
+          # Ad-hoc signing cannot authorize the upstream Debug inference entitlement.
+          xcodebuild test \
+            -workspace Easydict.xcworkspace -scheme Easydict \
+            -configuration Debug -destination 'platform=macOS,arch=arm64' \
+            -derivedDataPath "$RUNNER_TEMP/Easydict-Agent/release" \
+            -only-testing:EasydictTests/QueryModelCancellationTests \
+            -only-testing:EasydictTests/UtilityFunctionsTests \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=YES EASYDICT_RELEASE_PACKAGING=YES \
+            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= \
+            CODE_SIGN_ENTITLEMENTS=Easydict/App/Easydict.entitlements
+      - name: Show signing diagnostics on failure
+        if: failure()
+        run: |
+          /usr/bin/log show --style compact --last 3m \
+            --predicate 'process == "amfid" OR process == "taskgated-helper"' || true

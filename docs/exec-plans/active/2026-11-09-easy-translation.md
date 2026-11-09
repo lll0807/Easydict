@@ -42,7 +42,7 @@
 
 ## 进度
 
-- [ ] 单服务修改与审查。
+- [x] 单服务修改与审查。
 - [ ] GitHub 构建及现有测试。
 - [ ] Homebrew 发布与本机安装。
 - [ ] 界面验证与记录。
@@ -51,6 +51,11 @@
 
 - 初始 HEAD：`f5b61fafb4ba4d4778e9360df846f6c29ae368f0`，工作树干净。
 - 本机 `xcodebuild -version` 受阻：未安装完整 Xcode。
+- Swift 语法解析、工作流 YAML/Shell 解析、Info.plist 与个人 feed XML 检查通过。
+- Standards 与 Spec 两项源码审查未发现确定缺陷；尚不构成构建或运行通过证据。
+- GitHub Actions run `42591262402` 的 Release 构建通过；Debug 测试完成编译，但宿主启动失败
+  （NSPOSIXErrorDomain 162 / Runningboard 5），测试用例未执行。
+- Debug 默认 inference entitlement 需要开发者授权；CI 改用现有空 entitlement 文件，待复验。
 - 后续记录实际构建、测试和界面验证结果。
 
 ## 完成条件
