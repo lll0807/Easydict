@@ -40,9 +40,6 @@ struct ServiceTab: View {
                     .onReceive(serviceHasUpdatedNotification) { _ in
                         viewModel.updateServices()
                     }
-
-                    ServiceListControls()
-                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .padding(.horizontal, 12)
                 .padding(.bottom, 12)

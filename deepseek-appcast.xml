@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Personal builds are distributed through Homebrew, never the upstream feed. -->
+<rss version="2.0">
+    <channel>
+        <title>Easy Translation</title>
+        <link>https://github.com/lll0807/Easydict/releases</link>
+        <description>Update with brew upgrade --cask easy-translation.</description>
+    </channel>
+</rss>

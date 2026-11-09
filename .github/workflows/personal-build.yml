@@ -1,0 +1,62 @@
+name: Personal DeepSeek build
+
+on:
+  push:
+    branches: [feat/deepseek-only-homebrew]
+    paths:
+      - 'Easydict/**'
+      - 'Easydict.xcodeproj/**'
+      - '.github/workflows/personal-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: xcode-27
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build release
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          xcodebuild build \
+            -workspace Easydict.xcworkspace -scheme Easydict \
+            -configuration Release -destination 'generic/platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/Easydict-Agent/release" \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=YES EASYDICT_RELEASE_PACKAGING=YES \
+            CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+            MARKETING_VERSION=2.27.1 CURRENT_PROJECT_VERSION=71
+      - name: Run existing regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild test \
+            -workspace Easydict.xcworkspace -scheme Easydict \
+            -configuration Debug -destination 'platform=macOS,arch=arm64' \
+            -derivedDataPath "$RUNNER_TEMP/Easydict-Agent/tests" \
+            -only-testing:EasydictTests/QueryModelCancellationTests \
+            -only-testing:EasydictTests/UtilityFunctionsTests \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=YES EASYDICT_RELEASE_PACKAGING=YES \
+            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=
+      - name: Package application
+        shell: bash
+        run: |
+          set -euo pipefail
+          app="$RUNNER_TEMP/Easydict-Agent/release/Build/Products/Release/Easydict.app"
+          codesign --force --deep --sign - "$app"
+          codesign --verify --deep --strict "$app"
+          mkdir -p "$RUNNER_TEMP/dmg-root" dist
+          ditto "$app" "$RUNNER_TEMP/dmg-root/Easydict.app"
+          ln -s /Applications "$RUNNER_TEMP/dmg-root/Applications"
+          hdiutil create -volname 'Easy Translation' \
+            -srcfolder "$RUNNER_TEMP/dmg-root" -ov -format UDZO dist/EasyTranslation.dmg
+          shasum -a 256 dist/EasyTranslation.dmg > dist/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: easy-translation-arm64
+          path: dist/
+          if-no-files-found: error

@@ -88,14 +88,9 @@ final class LocalStorage: NSObject {
     /// - Returns: Ordered service type identifiers.
     @objc(allServiceTypes:)
     func allServiceTypes(_ windowType: EZWindowType) -> [String] {
-        let allServiceTypesKey = serviceTypesKey(of: windowType)
-
-        guard let storedTypes = userDefaults.array(forKey: allServiceTypesKey) as? [String] else {
-            userDefaults.set(defaultServiceTypeIDs, forKey: allServiceTypesKey)
-            return defaultServiceTypeIDs
-        }
-
-        return storedTypes
+        // This fork exposes one translation provider in every window. Keep the
+        // full factory available for OCR and speech, without querying its providers.
+        defaultServiceTypeIDs
     }
 
     /// Persists ordered service type identifiers for the given window.
@@ -417,9 +412,7 @@ final class LocalStorage: NSObject {
     private let decoder = JSONDecoder()
 
     private let defaultServiceTypeIDs: [String] = [
-        ServiceType.youdao.rawValue,
-        ServiceType.deepL.rawValue,
-        ServiceType.builtInAI.rawValue,
+        ServiceType.deepSeek.rawValue,
     ]
 
     /// Raw dictionary backing service query statistics.
@@ -445,12 +438,13 @@ final class LocalStorage: NSObject {
                 let uuid = components.uuid
                 let baseType = ServiceType(rawValue: rawType)
 
-                if serviceInfo(withType: baseType, serviceId: uuid, windowType: windowType) == nil {
+                if serviceInfo(withType: baseType, serviceId: uuid, windowType: windowType) == nil
+                    || !Defaults[.deepSeekOnlyConfigured] {
                     let serviceInfo = QueryServiceConfiguration(
                         uuid: uuid,
                         type: baseType,
                         enabled: true,
-                        enabledQuery: queryCount == 0,
+                        enabledQuery: true,
                         windowType: windowType
                     )
 
@@ -459,6 +453,8 @@ final class LocalStorage: NSObject {
                 }
             }
         }
+        // Migrate old disabled flags once; subsequent launches respect user choices.
+        Defaults[.deepSeekOnlyConfigured] = true
     }
 
     /// Applies persisted flags to a live service instance.

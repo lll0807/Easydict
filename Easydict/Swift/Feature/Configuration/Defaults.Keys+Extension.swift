@@ -12,6 +12,8 @@ import Magnet
 
 /// Utils
 extension Defaults.Keys {
+    static let deepSeekOnlyConfigured = Key<Bool>("EasyTranslation_DeepSeekOnlyConfigured", default: false)
+
     /// is first launch
     static let firstLaunch = Key<Bool>("EZConfiguration_kFirstLaunch", default: true)
 }

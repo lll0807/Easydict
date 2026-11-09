@@ -23,7 +23,7 @@ final class AppConstants: NSObject {
     // MARK: - Repository
 
     /// Repository full name, eg. tisfeng/Easydict
-    static let repoName = "tisfeng/Easydict"
+    static let repoName = "lll0807/Easydict"
     static let repoURL = URL(string: "https://github.com/\(repoName)")!
     static let releasesURL = repoURL.appending(path: "releases")
     static let issuesURL = repoURL.appending(path: "issues")
