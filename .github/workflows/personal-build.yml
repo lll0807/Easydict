@@ -8,6 +8,11 @@ on:
       - 'Easydict.xcodeproj/**'
       - '.github/workflows/personal-build.yml'
   workflow_dispatch:
+    inputs:
+      tests_only:
+        description: Run regression tests without rebuilding a release package
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -19,6 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Build release
+        if: ${{ inputs.tests_only != true }}
         shell: bash
         run: |
           set -euo pipefail
@@ -31,6 +37,7 @@ jobs:
             CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
             MARKETING_VERSION=2.27.1 CURRENT_PROJECT_VERSION=71
       - name: Package application
+        if: ${{ inputs.tests_only != true }}
         shell: bash
         run: |
           set -euo pipefail
@@ -44,6 +51,7 @@ jobs:
             -srcfolder "$RUNNER_TEMP/dmg-root" -ov -format UDZO dist/EasyTranslation.dmg
           shasum -a 256 dist/EasyTranslation.dmg > dist/SHA256SUMS
       - uses: actions/upload-artifact@v4
+        if: ${{ inputs.tests_only != true }}
         with:
           name: easy-translation-arm64
           path: dist/
@@ -62,7 +70,7 @@ jobs:
             -only-testing:EasydictTests/UtilityFunctionsTests \
             ARCHS=arm64 ONLY_ACTIVE_ARCH=YES EASYDICT_RELEASE_PACKAGING=YES \
             CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= \
-            CODE_SIGN_ENTITLEMENTS=Easydict/App/Easydict.entitlements
+            CODE_SIGN_ENTITLEMENTS="$GITHUB_WORKSPACE/Easydict/App/Easydict.entitlements"
       - name: Show signing diagnostics on failure
         if: failure()
         run: |
